@@ -1,9 +1,8 @@
-pub fn convert_vec<'a>(vec_i: impl Iterator<Item = &'a str>) -> Vec<String> {
-     vec_i.map(|s| s.to_string()).collect()
-}
-
 pub fn split(string: &str) -> Vec<String> {
-    let mut splitted = convert_vec(string.split_whitespace());
+    let mut splitted = string
+        .split_whitespace()
+        .map(str::to_string)
+        .collect::<Vec<String>>();
     splitted.pop_if(|x| x.is_empty());
     splitted
 }
