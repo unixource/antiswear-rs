@@ -4,7 +4,7 @@ pub fn convert_vec<'a>(vec_i: impl Iterator<Item = &'a str>) -> Vec<String> {
 
 pub fn split(string: &str) -> Vec<String> {
     let mut splitted = convert_vec(string.split_whitespace());
-    splitted.pop_if(|x| x == "");
+    splitted.pop_if(|x| x.is_empty());
     splitted
 }
 

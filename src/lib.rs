@@ -82,13 +82,13 @@ impl<'a> Builder<'a> {
         alphabet.push(' ');
 
         Antiswear {
-            bypasses: bypasses,
+            bypasses,
             prefixes: utils::add(
                         utils::split(self.prefixes_first),
                         utils::split(self.prefixes_second)
                       ),
             short: utils::split(self.short),
-            alphabet: alphabet,
+            alphabet,
             replacements: Replacement::from_str(self.replacements),
             exceptions: utils::split(self.exceptions),
             mode: self.mode,
@@ -96,8 +96,8 @@ impl<'a> Builder<'a> {
     }
 }
 
-impl Antiswear {
-    pub fn new() -> Self {
+impl Default for Antiswear {
+    fn default() -> Self {
         Self {
             bypasses: Vec::new(),
             prefixes: Vec::new(),
@@ -108,6 +108,10 @@ impl Antiswear {
             mode: Mode::Startswith,
         }
     }
+}
+
+impl Antiswear {
+
 
     fn replace_bypasses(&self, word: &str) -> String {
         Replacement::replace(&self.bypasses, &self.replace_repeats(word))
@@ -173,8 +177,8 @@ impl Antiswear {
     
     fn get(&self, word: &str) -> [String; 4] {
         let word = &word.to_lowercase();
-        let replace_replacements = self.replace_replacements(&word);
-        let replace_bypasses = self.replace_bypasses(&word);
+        let replace_replacements = self.replace_replacements(word);
+        let replace_bypasses = self.replace_bypasses(word);
         [
             replace_replacements.clone(),
             replace_bypasses.clone(),
@@ -191,7 +195,7 @@ impl Antiswear {
     ///
     /// assert_eq!(antiswear.check("what the fuck").is_some(), true);
     /// ```
-    pub fn check<'a>(&self, text: &'a str) -> Option<Analyze>{
+    pub fn check(&self, text: &str) -> Option<Analyze>{
         let mut slice = text.trim().replace(" ", "");
         slice = {
             #[allow(unused_assignments)]
@@ -306,7 +310,7 @@ pub struct Replacement {
 
 impl Replacement {
     pub fn from_str(value: &str) -> Vec<Self> {
-        if value == "" {
+        if value.is_empty() {
             return vec![
                 Self {
                     from: String::new(),
