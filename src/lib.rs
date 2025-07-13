@@ -6,6 +6,7 @@ pub mod utils;
 
 /// Sets the method for recognizing words.
 /// In the case of checking the `short` variable `Mode::Startswith` is replaced by `Mode::Equally` to avoid accidental triggers of similar words.
+#[derive(Debug)]
 pub enum Mode {
     Contains,
     Startswith,
@@ -25,6 +26,7 @@ impl Mode {
 }
 
 /// The main structure that stores information about the language and has a function for checking.
+#[derive(Debug)]
 pub struct Antiswear {
     pub bypasses: Vec<Replacement>,
     pub prefixes: Vec<String>,
@@ -55,6 +57,7 @@ pub struct Antiswear {
 ///     mode: Mode::Contains,
 /// }.build(); // -> Antiswear
 /// ```
+#[derive(Debug)]
 pub struct Builder<'a> {
     pub bypasses: &'a str,
     pub prefixes_first: &'a str,
@@ -66,12 +69,13 @@ pub struct Builder<'a> {
     pub mode: Mode,
 }
 
+#[derive(Debug, PartialEq)]
 pub struct Analyze {
     pub word: String,
     pub index: usize,
 }
 
-impl<'a> Builder<'a> {
+impl Builder<'_> {
     pub fn build(self) -> Antiswear {
         let mut alphabet = self.alphabet.to_string();
         let bypasses = Replacement::from_str(self.bypasses);
@@ -84,9 +88,9 @@ impl<'a> Builder<'a> {
         Antiswear {
             bypasses,
             prefixes: utils::add(
-                        utils::split(self.prefixes_first),
-                        utils::split(self.prefixes_second)
-                      ),
+                utils::split(self.prefixes_first),
+                utils::split(self.prefixes_second),
+            ),
             short: utils::split(self.short),
             alphabet,
             replacements: Replacement::from_str(self.replacements),
@@ -111,8 +115,6 @@ impl Default for Antiswear {
 }
 
 impl Antiswear {
-
-
     fn replace_bypasses(&self, word: &str) -> String {
         Replacement::replace(&self.bypasses, &self.replace_repeats(word))
     }
@@ -121,9 +123,9 @@ impl Antiswear {
         let mut out = String::new();
         let mut hold = false;
         let chars: Vec<char> = word.chars().collect();
-        
+
         for (i, current) in word.chars().enumerate() {
-            if i > 0 && chars[i-1] == current {
+            if i > 0 && chars[i - 1] == current {
                 hold = true;
             }
             if !hold {
@@ -146,39 +148,43 @@ impl Antiswear {
             if !self.alphabet.contains(char) {
                 buffer = word.replace(char, "");
             }
-        } 
+        }
         let word = &buffer;
 
         for except in &self.exceptions {
             if self.mode.is_contains(word, except) {
-                return false
+                return false;
             }
         }
 
         for pref in &self.prefixes {
             if word.starts_with(pref) {
-                return true
+                return true;
             }
         }
 
         for check in &self.short {
-            match self.mode  {
-                Mode::Startswith => if word == check { 
-                    return true 
-                },  
-                _ => if self.mode.is_contains(word, check) {
-                    return true;
-                },
-            } 
+            match self.mode {
+                Mode::Startswith => {
+                    if word == check {
+                        return true;
+                    }
+                }
+                _ => {
+                    if self.mode.is_contains(word, check) {
+                        return true;
+                    }
+                }
+            }
         }
 
         false
     }
-    
+
     fn get(&self, word: &str) -> [String; 4] {
-        let word = &word.to_lowercase();
-        let replace_replacements = self.replace_replacements(word);
-        let replace_bypasses = self.replace_bypasses(word);
+        let word = word.to_lowercase();
+        let replace_replacements = self.replace_replacements(word.as_str());
+        let replace_bypasses = self.replace_bypasses(word.as_str());
         [
             replace_replacements.clone(),
             replace_bypasses.clone(),
@@ -186,7 +192,7 @@ impl Antiswear {
             self.replace_bypasses(&replace_replacements),
         ]
     }
-    
+
     /// # Example
     ///
     /// ```
@@ -195,46 +201,30 @@ impl Antiswear {
     ///
     /// assert_eq!(antiswear.check("what the fuck").is_some(), true);
     /// ```
-    pub fn check(&self, text: &str) -> Option<Analyze>{
-        let mut slice = text.trim().replace(" ", "");
-        slice = {
-            #[allow(unused_assignments)]
-            let mut end = 0;
+    pub fn check(&self, text: &str) -> Option<Analyze> {
+        let slice = text
+            .trim()
+            .replace(" ", "")
+            .chars()
+            .take(10)
+            .collect::<String>();
 
-            let length = slice.chars().count();
-            if length > 10 {
-                end = 10;
-            } else {
-                end = length;
-            }
-
-            if let Some(r) = utils::utf8_slice(&slice, 0, end) {
-                r.to_string()
-            } else {
-                String::new()
-            }
-        };
-        
         for bypass in self.get(&slice) {
-           if self.is_swear(&bypass) {
-                return Some(
-                        Analyze {
-                            word: slice,
-                            index: 0,
-                        }
-                )
-           } 
+            if self.is_swear(&bypass) {
+                return Some(Analyze {
+                    word: slice,
+                    index: 0,
+                });
+            }
         }
 
         for (i, word) in text.split_whitespace().enumerate() {
             for bypass in self.get(word) {
                 if self.is_swear(&bypass) {
-                    return Some(
-                        Analyze {
-                            word: word.to_string(),
-                            index: i,
-                        }
-                    )
+                    return Some(Analyze {
+                        word: word.to_string(),
+                        index: i,
+                    });
                 }
             }
         }
@@ -265,12 +255,13 @@ impl Antiswear {
             replacements: "",
             exceptions: "bitchin bitchy",
             mode: Mode::Contains,
-        }.build()
-     }
+        }
+        .build()
+    }
 }
 
 /// A structure for accounting for several languages at once
-/// 
+///
 /// # Example
 ///
 /// ```
@@ -280,12 +271,13 @@ impl Antiswear {
 ///     elems: vec![
 ///         Antiswear::en(),
 ///         Antiswear::ru(),
-///     ] 
+///     ]
 /// };
 ///
 /// assert_eq!(antiswear.check("what the fuck").is_some(), true);
 /// assert_eq!(antiswear.check("блять...").is_some(), true);
 /// ```
+#[derive(Debug)]
 pub struct AntiswearGroup {
     pub elems: Vec<Antiswear>,
 }
@@ -295,14 +287,15 @@ impl AntiswearGroup {
         for antiswear in &self.elems {
             let check = antiswear.check(text);
             if check.is_some() {
-                return check
+                return check;
             }
         }
-        
+
         None
     }
 }
 
+#[derive(Default, Debug)]
 pub struct Replacement {
     pub from: String,
     pub into: String,
@@ -311,21 +304,19 @@ pub struct Replacement {
 impl Replacement {
     pub fn from_str(value: &str) -> Vec<Self> {
         if value.is_empty() {
-            return vec![
-                Self {
-                    from: String::new(),
-                    into: String::new(),
-                }
-            ]
+            return vec![Self::default()];
         }
 
-        let mut conv: Vec<Self> = value.split(" ").map(|elem| {
-            let r = utils::convert_vec(elem.split("-"));
-            Self {
-                from: r[0].clone(),
-                into: r[1].clone(),
-            }
-        }).collect();
+        let mut conv = value
+            .split(" ")
+            .map(|elem| {
+                let r = elem.split("-").collect::<Vec<_>>();
+                Self {
+                    from: r[0].to_string(),
+                    into: r[1].to_string(),
+                }
+            })
+            .collect::<Vec<_>>();
 
         conv.sort_by_key(|s| s.from.len());
         conv.reverse();
@@ -333,12 +324,8 @@ impl Replacement {
     }
 
     fn replace(vec: &Vec<Replacement>, word: &str) -> String {
-        let mut out = word.to_string();
-
-        for rep in vec {
-            out = out.replace(&rep.from, &rep.into);
-        }
-
-        out
+        vec.iter().fold(word.to_string(), |out, rep| {
+            out.replace(rep.from.as_str(), rep.into.as_str())
+        })
     }
 }
