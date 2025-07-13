@@ -1,5 +1,5 @@
 [package]
-name = "antiswear"
+name = "antiswear-rs"
 description = "A library for recognizing obscene words with distortion protection,"
 version = "0.1.0"
 edition = "2024"

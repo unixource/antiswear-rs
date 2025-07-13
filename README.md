@@ -1,2 +1,2 @@
 # Documentation
-Please see https://docs.rs/antiswear/.
+Please see https://docs.rs/antiswear-rs/.
