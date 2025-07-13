@@ -42,7 +42,7 @@ pub struct Antiswear {
 /// # Examples
 ///
 /// ```
-/// use antiswear::{Builder, Mode};
+/// use antiswear_rs::{Builder, Mode};
 ///
 /// Builder {
 ///     bypasses: "4-f 1-i", // ex. b1tch / "<from>-<into>"
@@ -186,7 +186,7 @@ impl Antiswear {
     /// # Example
     ///
     /// ```
-    /// use antiswear::Antiswear;
+    /// use antiswear_rs::Antiswear;
     /// let antiswear = Antiswear::en();
     ///
     /// assert_eq!(antiswear.check("what the fuck").is_some(), true);
@@ -270,7 +270,7 @@ impl Antiswear {
 /// # Example
 ///
 /// ```
-/// use antiswear::{AntiswearGroup, Antiswear};
+/// use antiswear_rs::{AntiswearGroup, Antiswear};
 ///
 /// let antiswear = AntiswearGroup {
 ///     elems: vec![
